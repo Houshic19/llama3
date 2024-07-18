@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Chatbot</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <style>
+        body {
+            background-color: #2E1A47; /* Dark Purple */
+        }
+        header {
+            background-color: #4B2C69; /* Darker Purple */
+            padding: 1rem;
+            text-align: center;
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+        footer {
+            background-color: #4B2C69; /* Darker Purple */
+            padding: 1rem;
+            text-align: center;
+            border-radius: 0 0 0.5rem 0.5rem;
+            position: relative;
+            bottom: 0;
+            width: 100%;
+        }
+        .chat-message {
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+        .user-message {
+            background-color: #6A4B8A; /* Light Purple */
+            color: white;
+            text-align: right;
+        }
+        .bot-message {
+            background-color: #E3E3E3;
+            color: black;
+            text-align: left;
+        }
+        .bot-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        .footer-icons a {
+            margin: 0 0.5rem;
+            color: white;
+            transition: color 0.3s;
+        }
+        .footer-icons a:hover {
+            color: #FFD700; /* Gold color on hover */
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center">
+
+<header>
+    <h1 class="text-3xl font-bold text-white">AI Chatbot</h1>
+    <p class="text-white">Your virtual assistant for any queries!</p>
+</header>
+
+<div class="container bg-white shadow-lg rounded mt-5 p-5 w-full max-w-lg">
+    <div id="chatbox" class="mb-3 h-96 overflow-y-scroll p-3 border border-gray-300 rounded-lg bg-gray-50 shadow-inner"></div>
+    <div class="flex input-area p-2">
+        <input type="text" id="input" class="flex-grow border rounded p-2 text-black" placeholder="Type your message..." />
+        <button id="send" class="bg-purple-600 text-white rounded p-2 ml-2 hover:bg-purple-700">Send</button>
+    </div>
+    <button id="download" class="bg-blue-600 text-white rounded p-2 mt-3 hover:bg-blue-700">Download Chat</button>
+</div>
+
+<footer>
+    <p class="text-white">© 2024 AI Chatbot. All rights reserved.</p>
+    <div class="footer-icons">
+        <a href="https://github.com/Houshic19" target="_blank" rel="noopener noreferrer">
+            <i class="fab fa-github fa-lg"></i>
+        </a>
+        <a href="https://www.linkedin.com/in/houshic-b-72200b218" target="_blank" rel="noopener noreferrer">
+            <i class="fab fa-linkedin fa-lg"></i>
+        </a>
+    </div>
+</footer>
+
+<script>
+    const inputField = document.getElementById('input');
+    const chatbox = document.getElementById('chatbox');
+    
+    document.getElementById('send').addEventListener('click', sendMessage);
+    
+    inputField.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+
+    document.getElementById('download').addEventListener('click', downloadChat);
+
+    function sendMessage() {
+        const input = inputField.value;
+        if (!input) return;
+
+        chatbox.innerHTML += `<div class="chat-message user-message">${input}</div>`;
+        inputField.value = '';
+
+        fetch('/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ input })
+        })
+        .then(response => response.json())
+        .then(data => {
+            chatbox.innerHTML += `
+                <div class="chat-message bot-message">
+                    <img src="https://cdn.icon-icons.com/icons2/1371/PNG/512/robot02_90810.png" alt="Bot Avatar" class="bot-avatar" />
+                    <span>${data.response}</span>
+                </div>`;
+            chatbox.scrollTop = chatbox.scrollHeight; // Auto-scroll to the latest message
+        });
+    }
+
+    function downloadChat() {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF();
+
+        // Set title and date
+        pdf.setFontSize(18);
+        pdf.text('Chat History', 10, 10);
+        pdf.setFontSize(12);
+        pdf.text(`Date: ${new Date().toLocaleString()}`, 10, 20);
+        pdf.text('-------------------------', 10, 30);
+
+        let y = 40; // Starting y position for messages
+        const messages = chatbox.querySelectorAll('.chat-message');
+
+        messages.forEach(msg => {
+            const isUser = msg.classList.contains('user-message');
+            const speaker = isUser ? 'User:' : 'Bot:';
+            const text = msg.innerText;
+            pdf.text(`${speaker} ${text}`, 10, y);
+            y += 10; // Increase y position for the next message
+        });
+
+        pdf.save('chat-history.pdf');
+    }
+</script>
+
+</body>
+</html>
+
