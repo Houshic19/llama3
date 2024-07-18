@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 client = OpenAI(
     base_url="https://integrate.api.nvidia.com/v1",
-    api_key="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"  # Replace with your actual API key
+    api_key=" "  # Replace with your actual API key
 )
 
 @app.route('/')
